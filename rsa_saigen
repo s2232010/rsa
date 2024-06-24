@@ -1,0 +1,186 @@
+import sympy
+import math
+
+print("RSA暗号のプログラムです\n")
+print("暗号化する場合は1、復号化する場合は2を入力\n")
+select =int(input())
+if select == 1:     #暗号化のプログラム
+    data = ["@" ,"A", "B", "C", "D", "E", "F", "G", "H" , "I", "J", "K", "L", "M", "N" , "O", "P", "Q", "R", "S", "T" , "U", "V", "W", "X", "Y", "Z"]
+    d_size = len(data)                                      #27文字と、そのリストの長さを取得
+    for i,j in enumerate(data):                             #enumerate:インデックス番号（カウント、順番）を取得。
+        print(i,j)
+
+    print("暗号化します。平文を大文字で入力してください")
+    str = input()   #平文入力
+    if str[0] == "@":
+        print("WARNING!!正しく暗号化できない可能性があります。")
+    str_size = len(str)                                     #平文のサイズを取得
+    P_size = str_size - 1                                   #公式にあたるPの部分を計算するためにリストの要素数を取得
+    P = 0
+
+    for i in str:
+        for l,j in enumerate(data):
+            if i == j:
+                P += l*pow(d_size, P_size)  #dataのlはリストの番号、pow関数内部では（dataリストの長さ^平文のリストの番号）を計算している
+                P_size -= 1
+
+    print("P=", P)
+
+    print("公開鍵を入力してくださいn=?",end="")
+    n = int(input())
+    print("e=?", end="")
+    e = int(input())
+    
+    
+    C = pow(P, e, n)    # Pのe乗をmod nで余りを出す
+    print("C=",C)
+
+    tabu = []
+    while C >= d_size:            #27進数化
+        q , r = divmod(C, d_size) #商と余りを同時に取得。r（余り）をリストに追加
+        tabu.append(r)
+        C = q
+        if q <= d_size :
+            tabu.append(q)
+
+    angou = []      #直前で出した27進数とdataを照らし合わせて文字化
+    for i in reversed(tabu):
+        for l,j in enumerate(data):
+            if i == l:
+                angou.append(j)
+    
+    
+    i = 2       #以下、暗号文が合っているか復号化して内部で確認。約数を求めるところから
+    while i < n :
+        if n % i == 0:
+            break
+        i += 1
+
+    k = i
+    s = int(n / i)
+    L = math.lcm(k-1, s-1)  #最大公倍数
+
+    def modinv(L, e):
+        x, y, g = sympy.gcdex(L, e)
+        if g != 1:
+            raise Exception('modular inverse does not exist')
+        else:
+            return x % e    #最小正剰余で返す
+
+    d = int(modinv(e, L))   #復号化キー
+
+
+    angou_size = len(angou) - 1
+    C = 0
+    for i in angou:
+        for l,j in enumerate(data):
+            if i == j:
+                C += l*pow(d_size, angou_size)
+                angou_size -= 1
+
+    P = pow(C, d, n)
+
+    kata = []
+    while P >= d_size:
+        q , r = divmod(P, d_size)
+        kata.append(r)
+        P = q
+        if q <= d_size :
+            kata.append(q)
+
+    fukugou = []
+    for i in reversed(kata):
+        for l,j in enumerate(data):
+            if i == l:
+                fukugou.append(j)
+    
+    fukugou_size = len(fukugou)         
+    i = 0
+    count = 0   
+    while i < fukugou_size:
+        if fukugou[i] == str[i]:
+            count += 1
+        i += 1
+            
+    if count == fukugou_size and count == str_size:
+        print("暗号文:", angou)
+    else : print("ERROR!!!!正しく暗号化されてません。")
+
+elif select == 2:   #復号化
+
+    data = ["@", "A", "B" , "C", "D", "E", "F", "G", "H" , "I", "J", "K", "L", "M", "N" , "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+    d_size = len(data)
+    print("\n\n復号化します")
+
+    print("暗号文を入力")
+    angou = input()
+    print("公開鍵を入力してくださいn=?",end="")
+    n = int(input())
+    print("e=?",end="")
+    e = int(input())
+
+    
+    i = 2  #nの約数を求める
+    while i < n :
+        if n % i == 0:
+            break
+        i += 1
+
+    if n == i:
+        print("素数")
+    else :
+        print(n,"は" ,i,"で割れます")
+
+    k = i
+    s = int(n / i)
+    print(k,"と", s,"が", n, "の約数")
+
+    L = math.lcm(k-1, s-1)  #最小公倍数を求める
+    print("最小公倍数:", L)
+
+    def modinv(L, e):   #復号化キーdを求める
+        x, y, g = sympy.gcdex(L, e)
+        if g != 1:
+            raise Exception('modular inverse does not exist')
+        else:
+            return x % e #最小正剰余で返す
+
+    d = int(modinv(e, L))
+    print("復号化キー:", d)     #復号化キー
+
+
+    angou_size = len(angou) - 1
+    C = 0
+    for i in angou:
+        for l,j in enumerate(data):
+            if i == j:
+                C += l*pow(d_size, angou_size)
+                angou_size -= 1
+
+    print("C=", C)
+
+    P = pow(C, d, n)
+    print("P=", P)
+
+
+    kata = []
+    while P >= d_size:
+        q , r = divmod(P, d_size)
+        kata.append(r)
+        P = q
+    
+        if q <= d_size :
+            kata.append(q)
+
+
+    fukugou = []
+    for i in reversed(kata):
+        for l,j in enumerate(data):
+            if i == l:
+                fukugou.append(j)
+            
+
+    print("平文:", fukugou)
+    
+else:
+    print("Error!!1か2を入力してください\n")
